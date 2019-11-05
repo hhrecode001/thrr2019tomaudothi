@@ -1,0 +1,160 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+#define int long long
+#define f1(i,i1,i2) for(int i=i1 ; i<=i2 ; i++)
+#define f2(i,i1,i2) for(int i=i1 ; i>=i2 ; i--)
+#define NMAX 100002
+#define MAUMAX 202
+
+vector<int> path[NMAX];
+vector< pair<int,int> > luucanh;
+string RGB[MAUMAX];
+int n,m,MM,timthay;
+int a[NMAX],mau[NMAX],checkmau[NMAX][MAUMAX];
+
+char h[16]={'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
+
+string dechex(int x){
+    string c = "";
+    f1(i,0,1){
+        c = h[x%16] + c;
+        x/=16;
+    }
+    return c;
+}
+
+void phamau(){
+    int bac=1;
+    int a = (bac+1)*(bac+1)*(bac+1) -1;
+    while (a<MM){
+        bac++;
+        a = (bac+1)*(bac+1)*(bac+1) -1;
+    }
+    //
+    int hs = (int)255/bac;
+    int dem=0;
+    string c;
+    f1(r,0,bac)
+        f1(g,0,bac)
+            f1(b,0,bac)
+            if (r+g+b != 0){
+                c = "";
+                c = dechex(r*hs) + c;
+                c = dechex(g*hs) + c;
+                c = dechex(b*hs) + c;
+                dem++;
+                c = '#' + c;
+                c = '"' + c + '"';
+                RGB[dem] = c;
+            }
+}
+
+void enter()
+{
+    cin>>n>>m;
+    int x,y;
+    f1(i,1,m){
+        cin>>x>>y;
+        path[x].push_back(y);
+        path[y].push_back(x);
+        luucanh.push_back(make_pair(x,y)); //luu canh de ghi lai ra file dot
+    }
+    //kiem tra chinh quy
+    MM = 0;// gia su ban dau Mau Max = 0
+    f1(i,1,n) MM = max(MM ,(int)path[i].size());
+
+    int cq = 1;
+    f1(i,2,n) if (path[i].size()!=path[i-1].size()){
+            cq = 0;
+            break;
+        }
+    MM+=cq;
+}
+
+void tomau(int u) //thu to mau nho nhat cho dinh u
+{
+    f1(i,1,MM)
+    if(checkmau[u][i]==0){
+        checkmau[u][i] = 1;
+        mau[u] = i;
+        break;
+    }
+}
+
+void xoamau(int u)
+{
+    checkmau[u][mau[u]] = 0;
+    mau[u] = 0;
+}
+
+void loangmau(int u)
+{
+    f1(i,0,(int)path[u].size()-1){
+        int v = path[u][i];
+        checkmau[v][mau[u]] = 1;
+    }
+}
+
+void xoaloang(int u)
+{
+    f1(i,0,(int)path[u].size()-1){
+        int v = path[u][i];
+        checkmau[v][mau[u]] = 0;
+    }
+}
+
+void permu(int p)// sinh hoan vi cho vi tri p
+{
+    if (p>n){ // co cach to mau thoa man
+        timthay = 1;
+        return;
+    }
+    f1(i,1,n) // thu cac dinh co the cho vi tri p
+        if (mau[i]==0){
+            a[p] = i;
+            tomau(i);
+            if (mau[i]!=0){
+                loangmau(i);
+                //
+                permu(p+1); // sinh hoan vi cho vi tri tiep theo
+                if (timthay) return;
+                //
+                xoaloang(i);
+            }
+            xoamau(i);
+        }
+}
+
+void ghira()
+{
+    cout<<"graph dothi\n";
+    cout<<"{\n";
+    f1(i,1,n)
+        cout<<" "<<i<<" "<<"[fillcolor = "<<RGB[mau[i]]<<" , style=filled];\n";
+    f1(i,0,(int)luucanh.size()-1)
+        cout<<" "<<luucanh[i].first<<" -- "<<luucanh[i].second<<" ;\n";
+    cout<<"}";
+}
+
+void solve()
+{
+    timthay=0;// gia su ban dau khong tim thay
+    permu(1);// bat dau sinh hoan vi tu vi tri dau tien
+    ghira();// ghi ra ket qua
+}
+
+main()
+{
+    freopen("dothi.txt","r",stdin);
+    freopen("dothitomau.dot","w",stdout);
+
+    enter();// nhap du lieu
+    phamau();// chuan bi danh sach mau
+    solve();// xuli
+}
